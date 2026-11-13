@@ -103,7 +103,7 @@ Below each day's meetings, the tool also prints any cached invite emails or meet
 - Organizer and guest emails come from the cached invite, so you can contact them on another channel, such as personal email or phone.
 - It works with the new and classic Teams desktop apps. Teams in a web browser leaves no cache that this tool can read.
 
-**Tested so far:** the macOS (JavaScript) and Python versions, on a Mac with the new Teams app, using both a real cache and a made-up sample cache (see [`tests/`](tests)). **The Windows PowerShell version is untested**, and the Python version hasn't been tried on Windows yet. A GitHub Actions workflow that runs every version on Windows and macOS is included, but it hasn't run yet.
+**Tested so far:** the macOS (JavaScript) and Python versions, on a Mac with the new Teams app, using both a real cache and a made-up sample cache (see [`tests/`](tests)). **The Windows PowerShell version is untested**, and the Python version hasn't been tried on Windows yet. A GitHub Actions workflow that runs every version on Windows and macOS is included in [`tests/github-actions-test.yml`](tests/github-actions-test.yml), but it isn't switched on yet.
 
 ## How it works
 

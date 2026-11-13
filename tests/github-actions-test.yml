@@ -1,3 +1,7 @@
+# GitHub Actions workflow that runs every version against the made-up sample cache on Windows and macOS.
+# It is kept here, switched off, because GitHub Actions is not available on this account yet.
+# To switch it on, move this file to .github/workflows/test.yml.
+
 name: test
 
 on:
