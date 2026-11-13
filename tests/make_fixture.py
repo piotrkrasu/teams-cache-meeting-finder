@@ -183,6 +183,8 @@ def main(out_dir):
         "subject": "Spotkanie zespo\u0142u",
         "location": "https://meet.google.com/abc-defg-hij",
         "organizerName": "Kim Example",
+        # a stored link field that is not a real meeting link (must never be shown as a join link)
+        "joinUrl": "https://phish.example/join\x1b]8;;https://evil.example\x07click",
     }
 
     filler = [(b"\x00\x01\x02\x01meta%03d" % i, idb_value({"note": "unrelated cached data %d" % i, "n": i}))

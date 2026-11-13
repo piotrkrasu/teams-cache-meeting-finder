@@ -30,6 +30,7 @@ must = [
 must_not = [
     "09:00-09:30",      # stale cached version of the moved meeting
     "link : https://evilzoom", "link: https://evilzoom",   # look-alike link offered as a join link
+    "phish.example", "evil.example",                     # untrusted stored link field
     "\x1b", "\x07",     # terminal control codes
     "Traceback", "Exception",
 ]

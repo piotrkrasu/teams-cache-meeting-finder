@@ -456,7 +456,8 @@ def main():
                     print("   Location  : %s" % safe(loc))
                 links = []
                 for k in ("skypeTeamsMeetingUrl", "shortOnlineMeetingJoinUrl", "onlineMeetingUrl", "joinUrl"):
-                    if isinstance(ev.get(k), str) and ev[k].startswith("http"):
+                    # only trust a stored link if all of it is a link on a real meeting domain
+                    if isinstance(ev.get(k), str) and MEET_RE.fullmatch(ev[k]):
                         links.append(ev[k])
                 # links typed into the description are often cut short; use the full copy if cached
                 links += [expand(u) for u in MEET_RE.findall(loc) + MEET_RE.findall(body)]

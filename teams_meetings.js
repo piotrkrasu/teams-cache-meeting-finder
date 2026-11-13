@@ -381,6 +381,7 @@ var MEET_SRC = "https://(?:[A-Za-z0-9-]+\\.)*(?:zoom\\.us/(?:j|w|my)/|teams\\.mi
   "teams\\.live\\.com/meet/|meet\\.google\\.com/|webex\\.com/|gotomeet\\.me/|meet\\.goto\\.com/|whereby\\.com/)" +
   "[A-Za-z0-9\\-._~:/?#\\[\\]@!$&()*+,;=%]*";
 function meetLinks(s) { return s.match(new RegExp(MEET_SRC, 'g')) || []; }
+var MEET_FULL_RE = new RegExp('^(?:' + MEET_SRC + ')$');
 var EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/g;
 
 // Cached text comes from invites anyone can send you, so strip terminal control codes and
@@ -565,7 +566,8 @@ function main(argv) {
         if (loc) out('   Location  : ' + safe(loc));
         var links = [];
         ['skypeTeamsMeetingUrl', 'shortOnlineMeetingJoinUrl', 'onlineMeetingUrl', 'joinUrl'].forEach(function (k) {
-          if (typeof ev[k] === 'string' && ev[k].indexOf('http') === 0) links.push(ev[k]);
+          // only trust a stored link if all of it is a link on a real meeting domain
+          if (typeof ev[k] === 'string' && MEET_FULL_RE.test(ev[k])) links.push(ev[k]);
         });
         // links typed into the description are often cut short; use the full copy if cached
         meetLinks(loc).concat(meetLinks(body)).forEach(function (u) { links.push(expand(u)); });

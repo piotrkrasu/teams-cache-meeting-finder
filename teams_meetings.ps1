@@ -490,10 +490,12 @@ public static class TeamsCacheMeetingFinder
     }
 
     // Host must be the real domain or a subdomain of it (so "evilzoom.us" or "zoom.us.evil.com" never match).
-    static readonly Regex MeetRe = new Regex(
+    const string MeetPattern =
         @"https://(?:[A-Za-z0-9-]+\.)*(?:zoom\.us/(?:j|w|my)/|teams\.microsoft\.com/(?:l/meetup-join|meet)/|" +
         @"teams\.live\.com/meet/|meet\.google\.com/|webex\.com/|gotomeet\.me/|meet\.goto\.com/|whereby\.com/)" +
-        @"[A-Za-z0-9\-._~:/?#\[\]@!$&()*+,;=%]*", RegexOptions.CultureInvariant);
+        @"[A-Za-z0-9\-._~:/?#\[\]@!$&()*+,;=%]*";
+    static readonly Regex MeetRe = new Regex(MeetPattern, RegexOptions.CultureInvariant);
+    static readonly Regex MeetFullRe = new Regex(@"\A(?:" + MeetPattern + @")\z", RegexOptions.CultureInvariant);
     static readonly Regex EmailRe = new Regex(@"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}");
     static readonly Regex EmailSkipRe = new Regex(@"no-?reply|notification|calendar-server|microsoft\.com$|\.spaces$|thread\.");
     static readonly Regex EmailIdRe = new Regex(@"^[0-9a-f_-]{20,}@");
@@ -767,8 +769,9 @@ public static class TeamsCacheMeetingFinder
                     List<string> links = new List<string>();
                     foreach (string k in new string[] { "skypeTeamsMeetingUrl", "shortOnlineMeetingJoinUrl", "onlineMeetingUrl", "joinUrl" })
                     {
+                        // only trust a stored link if all of it is a link on a real meeting domain
                         string v = Str(ev, k);
-                        if (v.StartsWith("http", StringComparison.Ordinal)) links.Add(v);
+                        if (MeetFullRe.IsMatch(v)) links.Add(v);
                     }
                     // links typed into the description are often cut short; use the full copy if cached
                     foreach (Match m in MeetRe.Matches(loc)) links.Add(Expand(m.Value));
