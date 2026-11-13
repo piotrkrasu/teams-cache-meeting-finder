@@ -1,7 +1,5 @@
 # Teams Cache Meeting Finder
 
-[![test](https://github.com/piotrkrasu/teams-cache-meeting-finder/actions/workflows/test.yml/badge.svg)](https://github.com/piotrkrasu/teams-cache-meeting-finder/actions/workflows/test.yml)
-
 Find today's meeting links when Microsoft Teams or Outlook is down.
 
 The Teams desktop app keeps a local copy of your recent calendar events and invites. This tool reads that copy on your own computer and prints today's meetings with their join links. When an invite includes them, it also prints Zoom meeting IDs and passcodes and the organizer's email.
@@ -24,7 +22,9 @@ This uses the JavaScript engine built into every Mac, so you don't need Python. 
 
 To include the next few days, add a number at the end: `| osascript -l JavaScript - 3`.
 
-### Windows
+### Windows (untested)
+
+> **This version hasn't been run on Windows yet.** It may fail with an error. If it does, use the [Python version](#already-have-python) instead, and please let us know what the error said.
 
 Open **PowerShell** (press Start, type `PowerShell`, press Enter), paste this and press Enter:
 
@@ -103,7 +103,7 @@ Below each day's meetings, the tool also prints any cached invite emails or meet
 - Organizer and guest emails come from the cached invite, so you can contact them on another channel, such as personal email or phone.
 - It works with the new and classic Teams desktop apps. Teams in a web browser leaves no cache that this tool can read.
 
-**Tested so far:** the macOS and Python versions on a Mac with the new Teams app and a real cache. All three versions are also tested automatically on Windows and macOS against a made-up sample cache (see [`tests/`](tests)). The Windows versions haven't been tried with a real Teams install yet.
+**Tested so far:** the macOS (JavaScript) and Python versions, on a Mac with the new Teams app, using both a real cache and a made-up sample cache (see [`tests/`](tests)). **The Windows PowerShell version is untested**, and the Python version hasn't been tried on Windows yet. A GitHub Actions workflow that runs every version on Windows and macOS is included, but it hasn't run yet.
 
 ## How it works
 

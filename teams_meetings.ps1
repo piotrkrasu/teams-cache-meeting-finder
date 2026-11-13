@@ -1,6 +1,7 @@
 # teams_meetings.ps1 - list today's meetings and join links from the Microsoft Teams desktop
 # app's local cache, using only what comes with Windows (PowerShell and its built-in C# compiler).
 # Read-only and offline: it only reads Teams' cache files on this computer and sends nothing.
+# UNTESTED: this Windows version has not been run on Windows yet. If it fails, use teams_meetings.py.
 # Usage:  irm https://raw.githubusercontent.com/piotrkrasu/teams-cache-meeting-finder/main/teams_meetings.ps1 | iex
 #   More days:  & ([scriptblock]::Create((irm https://raw.githubusercontent.com/piotrkrasu/teams-cache-meeting-finder/main/teams_meetings.ps1))) 3
 
