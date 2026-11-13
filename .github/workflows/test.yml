@@ -1,0 +1,84 @@
+name: test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build made-up Teams cache
+        run: python tests/make_fixture.py fixture
+      - name: Windows PowerShell 5.1, pasted the way the README says (irm | iex)
+        shell: powershell
+        run: |
+          $env:TEAMS_CACHE_DIR = "$PWD\fixture"
+          Get-Content -Raw .\teams_meetings.ps1 | Invoke-Expression | Out-File -Encoding utf8 ps51.out
+          Get-Content ps51.out
+          python tests/check_output.py ps51.out
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: PowerShell 7 with a days argument
+        shell: pwsh
+        run: |
+          $env:TEAMS_CACHE_DIR = "$PWD/fixture"
+          & ([scriptblock]::Create((Get-Content -Raw ./teams_meetings.ps1))) 2 | Out-File -Encoding utf8 ps7.out
+          python tests/check_output.py ps7.out
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          if (-not (Select-String -Quiet -Path ps7.out -Pattern 'MEETINGS ON .* \(times')) { exit 1 }
+          if ((Select-String -Path ps7.out -Pattern '^MEETINGS ON').Count -ne 2) { Write-Error "expected 2 days"; exit 1 }
+      - name: Python on Windows, piped (irm | python -)
+        shell: powershell
+        run: |
+          $env:TEAMS_CACHE_DIR = "$PWD\fixture"
+          Get-Content -Raw .\teams_meetings.py | python - | Out-File -Encoding utf8 py.out
+          python tests/check_output.py py.out
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: No cache present
+        shell: powershell
+        run: |
+          $env:TEAMS_CACHE_DIR = "$PWD\does-not-exist"
+          $out = Get-Content -Raw .\teams_meetings.ps1 | Invoke-Expression
+          $out
+          if ($out -notmatch 'No Microsoft Teams desktop cache found') { exit 1 }
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build made-up Teams cache
+        run: python tests/make_fixture.py fixture
+      - name: macOS built-in JavaScript, piped (curl | osascript)
+        run: |
+          TEAMS_CACHE_DIR="$PWD/fixture" osascript -l JavaScript - < teams_meetings.js > js.out
+          cat js.out
+          python tests/check_output.py js.out
+      - name: macOS JavaScript with a days argument
+        run: |
+          TEAMS_CACHE_DIR="$PWD/fixture" osascript -l JavaScript - 2 < teams_meetings.js > js2.out
+          test "$(grep -c '^MEETINGS ON' js2.out)" -eq 2
+      - name: Python, piped (curl | python3 -)
+        run: |
+          TEAMS_CACHE_DIR="$PWD/fixture" python - < teams_meetings.py > py.out
+          python tests/check_output.py py.out
+
+  plain-ascii:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scripts must be plain ASCII (Windows PowerShell pipes text as ASCII)
+        run: |
+          if LC_ALL=C grep -n '[^ -~]' teams_meetings.py teams_meetings.js teams_meetings.ps1; then
+            echo "Non-ASCII characters found above"; exit 1
+          fi

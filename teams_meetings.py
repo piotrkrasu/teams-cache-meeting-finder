@@ -22,6 +22,9 @@ DAYS = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 1
 
 # ---------------------------------------------------------------- locate the cache
 def find_stores():
+    override = os.environ.get("TEAMS_CACHE_DIR")  # for testing: read this LevelDB folder instead
+    if override:
+        return [override] if os.path.isdir(override) else []
     home = os.path.expanduser("~")
     pats = [
         os.path.join(home, "Library/Containers/com.microsoft.teams2/Data/Library/Application Support/"
@@ -333,6 +336,19 @@ def clean(s):
     return safe(s)
 
 
+NON_TEXT_RE = re.compile(u"[^\t\n\r\x20-\x7e\u00a0-\u024f\u2000-\u206f\u20ac]")
+
+
+def text_run(t, i, back=6000, fwd=3000):
+    # The stretch of readable text around position i, i.e. the cached string that contains it.
+    lo, hi = max(0, i - back), min(len(t), i + fwd)
+    m = NON_TEXT_RE.search(t[lo:i][::-1])
+    a = i - m.start() if m else lo
+    m = NON_TEXT_RE.search(t, i, hi)
+    b = m.start() if m else hi
+    return t[a:b]
+
+
 def find_all(text, needle, limit=60):
     out, i = [], text.find(needle)
     while i >= 0 and len(out) < limit:
@@ -475,7 +491,7 @@ def main():
                     for i in find_all(t, phrase, 40):
                         if re.match(r"\s\d\d:\d\d:\d\d GMT", t[i + len(phrase):i + len(phrase) + 14]):
                             continue  # web request header, not a meeting
-                        seg = t[max(0, i - 4000):i + 2500]
+                        seg = text_run(t, i)
                         c = clean(seg)
                         j = c.find(phrase)
                         if j < 0:
