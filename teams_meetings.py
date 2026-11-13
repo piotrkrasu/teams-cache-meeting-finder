@@ -306,10 +306,19 @@ def to_local(v):
     return None
 
 
+# Host must be the real domain or a subdomain of it (so "evilzoom.us" or "zoom.us.evil.com" never match).
 MEET_RE = re.compile(
-    r"https://[A-Za-z0-9.-]*(?:zoom\.us/(?:j|w|my)/|teams\.microsoft\.com/l/meetup-join/|teams\.microsoft\.com/meet/|"
+    r"https://(?:[A-Za-z0-9-]+\.)*(?:zoom\.us/(?:j|w|my)/|teams\.microsoft\.com/(?:l/meetup-join|meet)/|"
     r"teams\.live\.com/meet/|meet\.google\.com/|webex\.com/|gotomeet\.me/|meet\.goto\.com/|whereby\.com/)"
     r"[A-Za-z0-9\-._~:/?#\[\]@!$&()*+,;=%]*")
+
+# Cached text comes from invites anyone can send you, so strip terminal control codes and
+# bidi/zero-width characters before printing it.
+UNSAFE_RE = re.compile(u"[\x00-\x1f\x7f-\x9f\u200b-\u200f\u202a-\u202e\u2066-\u2069]")
+
+
+def safe(s):
+    return re.sub(r"\s+", " ", UNSAFE_RE.sub(" ", str(s))).strip()
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")
 
 
@@ -321,7 +330,7 @@ def clean(s):
     s = re.sub(r"^[^<>]*>", " ", s)   # tag cut off at the start of the window
     s = re.sub(r"<[^>]*$", " ", s)    # tag cut off at the end of the window
     s = re.sub(u"[^\x20-\x7e\u00a0-\u024f\u2013\u2014\u2019]+", " ", s)
-    return re.sub(r"\s+", " ", s).strip()
+    return safe(s)
 
 
 def find_all(text, needle, limit=60):
@@ -418,17 +427,17 @@ def main():
                 print("No cached calendar events for this day. Teams only caches meetings it has")
                 print("loaded recently, so check the 'invites mentioning this date' section below.")
             for st, en, ev in todays:
-                subj = ev.get("subject") or "(no subject)"
-                body = ev.get("bodyPreview") or ""
-                loc = ev.get("location") or ""
+                subj = safe(ev.get("subject") or "") or "(no subject)"
+                body = ev.get("bodyPreview") if isinstance(ev.get("bodyPreview"), str) else ""
+                loc = ev.get("location") if isinstance(ev.get("location"), str) else ""
                 print("\n%s-%s  %s" % (st.strftime("%H:%M"), en.strftime("%H:%M") if en else "?", subj))
-                if ev.get("isCancelled") or re.match(r"(?i)cancel", subj):
+                if ev.get("isCancelled") is True or re.match(r"(?i)cancel", subj):
                     print("   ** looks CANCELLED **")
-                print("   Organizer : %s" % (ev.get("organizerName") or "?"))
+                print("   Organizer : %s" % safe(ev.get("organizerName") or "?"))
                 if ev.get("myResponseType"):
-                    print("   Your reply: %s" % ev.get("myResponseType"))
+                    print("   Your reply: %s" % safe(ev.get("myResponseType")))
                 if loc:
-                    print("   Location  : %s" % loc)
+                    print("   Location  : %s" % safe(loc))
                 links = []
                 for k in ("skypeTeamsMeetingUrl", "shortOnlineMeetingJoinUrl", "onlineMeetingUrl", "joinUrl"):
                     if isinstance(ev.get(k), str) and ev[k].startswith("http"):
@@ -456,7 +465,7 @@ def main():
                 if em:
                     print("   Emails seen near this invite: %s" % ", ".join(em))
                 if ev.get("lastModifiedTime"):
-                    print("   (cached version last changed %s UTC)" % str(ev["lastModifiedTime"])[:16].replace("T", " "))
+                    print("   (cached version last changed %s UTC)" % safe(str(ev["lastModifiedTime"])[:16].replace("T", " ")))
 
             # raw invite emails / chat meeting cards that mention the date
             print("\n--- Invites / messages in the cache that mention %s ---" % day.strftime("%d %b"))
